@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "obsidian-flight-deck"
+version = "0.1.0"
+description = "A config-driven, plugin-based daily dashboard for Obsidian, built from your live tools (GitHub, status pages, calendar, email, Slack)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Greg Richardson" }]
+dependencies = []                      # stdlib only — no pip deps
+
+[project.scripts]
+flightdeck = "flightdeck.cli:main"
+
+[tool.setuptools]
+packages = ["flightdeck", "flightdeck.panels", "flightdeck.auth"]
