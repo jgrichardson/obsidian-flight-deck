@@ -1,30 +1,93 @@
-<!doctype html><html><head><meta charset="utf-8"><title>Flight Deck mockup</title>
+<!doctype html><html><head><meta charset="utf-8"><title>Flight Deck</title>
 <style>
-body{background:#1e1e1e;color:#dcddde;font:15px/1.5 -apple-system,Segoe UI,sans-serif;max-width:1050px;margin:24px auto;padding:0 16px}
-.card{border-radius:10px;padding:12px 16px;margin:0 0 16px;border:2px solid}
-.tip{background:#12241f;border-color:#1f6f52}.info{background:#0f1e2e;border-color:#2b6cb0}
-.q{background:#2a2410;border-color:#8a6d1f}.abs{background:#141414;border-color:#444}
-h3{margin:.2em 0 .5em;font-size:1.1em}table{width:100%;border-collapse:collapse;font-size:.95em}
-td,th{border-bottom:1px solid #333;text-align:left;padding:4px 8px}a{color:#7aa2f7}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-</style></head><body>
+:root{--bg:#191b22;--card:#20232d;--bd:#2c3140;--tx:#dcddde;--mut:#8b90a0;--lnk:#7aa2f7}
+*{box-sizing:border-box}body{background:var(--bg);color:var(--tx);font:14.5px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif;margin:0;padding:26px 30px}
+.wrap{max-width:1040px;margin:0 auto}
+.meta{color:var(--mut);font-style:italic;font-size:13px;margin:0 0 18px}
+.card{background:var(--card);border:1.5px solid var(--bd);border-left-width:4px;border-radius:11px;padding:13px 17px;margin:0 0 15px}
+.card h3{margin:0 0 9px;font-size:15.5px;display:flex;align-items:center;gap:7px}
+.tip{border-left-color:#2bb673}.tip h3{color:#2bb673}
+.info{border-left-color:#4a90d9}.info h3{color:#4a90d9}
+.note{border-left-color:#8a8fa3}.note h3{color:#a7abbb}
+.q{border-left-color:#e0a419}.q h3{color:#e0a419}
+.cal{border-left-color:#4a90d9}.cal h3{color:#6cb0e6}
+.mail{border-left-color:#c96}.mail h3{color:#d9a066}
+.abs{border-left-color:#9a7fd1}.abs h3{color:#b39ddb}
+.pen{border-left-color:#5aa0c9}.pen h3{color:#5aa0c9}
+ul{margin:5px 0;padding-left:20px}li{margin:3px 0}
+b,strong{color:#f0f1f4}a{color:var(--lnk);text-decoration:none}
+table{width:100%;border-collapse:collapse;margin:6px 0;font-size:13.5px}
+th{color:var(--mut);font-weight:600;text-align:left}td,th{border-bottom:1px solid var(--bd);padding:5px 9px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.sub{color:var(--mut);font-size:12.5px}code{background:#2a2f3c;padding:1px 5px;border-radius:4px;font-size:12.5px}
+.pill{background:#2a2f3c;border-radius:4px;padding:1px 6px;font-size:12px;color:#aeb4c4}
+.mono{font-family:ui-monospace,Menlo,monospace;color:var(--mut);font-size:12.5px}
+.dot{font-size:12px}
+</style></head><body><div class="wrap">
+<div class="meta">Thu 2026-08-27 11:24 EDT · derived · 01 Activity · DAILY DEV STANDUP</div>
+
 <div class="card tip"><h3>🔥 Standup</h3>
-<b>Focused on top priorities this week</b>
-<ul><li>Billing — shipped, awaiting QA</li><li>Onboarding — in progress, 3/5 PRs merged</li>
-<li>Reporting — not started</li></ul><b>What's next:</b> QA on onboarding, push spec for reporting</div>
-<div class="row">
-<div class="card abs"><h3>📊 Tech progress — last 24h</h3>
-<table><tr><th>opened</th><th>merged</th><th>+lines</th><th>-lines</th></tr>
-<tr><td>8</td><td>6</td><td>+5,981</td><td>-104</td></tr></table>
-<h3 style="margin-top:12px">In progress</h3>
-<table><tr><th>PR</th><th>project</th><th>what</th></tr>
-<tr><td><a>#18806</a></td><td>Billing</td><td>entry screen</td></tr>
-<tr><td><a>#18758</a></td><td>Onboarding</td><td>dashboard tiles</td></tr></table></div>
+<b>Focused on our top-5 prios for acctg this week</b>
+<ul>
+<li><b>Dashboard metrics</b> — built, in staging awaiting Laura's QA</li>
+<li><b>Manager-estimated valuations</b> — in progress; 3/5 PRs merged (rename, SAFE/note ownership, data model), entry screen + write-path service in build</li>
+<li><b>Transfer handling + carry allocation</b> — preview build awaiting Dermot QA; awaiting specs/storyboard from Dermot</li>
+<li><b>GP view into mgmt fees</b> — not started</li>
+</ul>
+<b>Prior long-running projects</b>
+<ul><li>Portfolio migration — supporting Kerri on cutover</li><li>Valuation Update Wizard — built, in production</li></ul>
+<b>What's up next</b>
+<ul><li>Support Kerri on cutovers</li><li>Manager estimates → QA</li><li>Dashboard to prod after Laura's QA</li></ul></div>
+
+<div class="grid">
 <div>
-<div class="card info"><h3>ℹ️ System status 🟢</h3>
-• <a>GitHub</a>: 🟢 operational<br>• <a>Claude</a>: 🟢 operational</div>
+<div class="card pen"><h3>✏️ My notes</h3><ul><li>Call Adeo re: Oct 1 mandate</li><li>Review Dermot's carry math before standup</li></ul></div>
+<div class="card info"><h3>ℹ️ Claude quotas</h3>
+<table><tr><th>account</th><th>5h</th><th>week</th></tr>
+<tr><td>you@work.com</td><td>12%</td><td>30%</td></tr>
+<tr><td>you@personal.com</td><td>—</td><td>27%</td></tr></table></div>
+<div class="card info"><h3>ℹ️ System status <span class="dot">🟢</span></h3>
+<ul style="list-style:none;padding-left:2px">
+<li><span class="dot">🟢</span> <a>GitHub</a> — all operational</li>
+<li><span class="dot">🟢</span> <a>Claude</a> — all operational</li>
+<li><span class="dot">🟡</span> <a>Status.example</a> — degraded API latency</li></ul></div>
+</div>
+<div>
+<div class="card note"><h3>📝 Slack drafts <span class="sub">awaiting review (1)</span></h3>
+<ul><li><b>#accounting-dev</b> (reply) — "Basis just answers which set of books…"</li></ul></div>
+<div class="card q"><h3>❓ Base <span class="sub">(1 to answer)</span></h3>
+<b>Mentions you owe a reply</b><ul><li><a>What is the "basis"?</a> — Dermot · 3 repl</li></ul>
+<b>Dev channel activity</b><ul><li><span class="mono">08/27 09:12</span> <a>Hermi seems down again</a> — Travis · <span class="sub">dismiss</span></li></ul></div>
+</div>
+</div>
+
+<div class="grid">
+<div class="card cal"><h3>📅 Calendar — today <span class="sub">(2)</span></h3>
+<ul><li><b>11:30</b> <a>Tech Standup ↗</a></li>
+<li>✉️ <b>invite to respond</b> — <a>Planning Sync ↗</a> (14:00, from Kerri)</li></ul></div>
+<div class="card mail"><h3>✉️ Email — needs you <span class="sub">(2)</span></h3>
+<b class="sub">Decile, direct to you</b>
+<ul><li><span class="mono">08/27 08:41</span> <a>Katrina Price — Re: valuation policy sign-off</a></li></ul>
+<b class="sub">GitHub — you were @mentioned</b>
+<ul><li><span class="mono">08/27 07:10</span> <a>Woody Butler — re-review requested on #18357</a></li></ul></div>
+</div>
+
 <div class="card q"><h3>❓ Waiting on</h3>
-<b>Alice</b><ul><li>sign-off on the API spec</li></ul>
-<b>Bob</b><ul><li>QA on the transfers build</li></ul></div>
-</div></div>
-</body></html>
+<div class="grid"><div><b>Dermot</b><ul><li>feedback from QA on the transfers site</li><li>specs/storyboards on transfer + carry</li></ul></div>
+<div><b>Laura</b><ul><li>feedback from QA on the dashboard site</li></ul></div></div></div>
+
+<div class="card abs"><h3>📊 Tech progress — last 24h</h3>
+<table><tr><th>PRs opened</th><th>merged to develop</th><th>commits</th><th>lines +</th><th>lines -</th></tr>
+<tr><td>8</td><td>6</td><td>95</td><td>+5,981</td><td>-104</td></tr></table>
+<b style="display:block;margin:10px 0 4px">Merged to develop (24h)</b>
+<table><tr><th>PR</th><th>project</th><th>what</th></tr>
+<tr><td><a>#18792</a></td><td><span class="pill">Manager Estimates</span></td><td>manager-estimated valuations data model</td></tr>
+<tr><td><a>#18790</a></td><td><span class="pill">Manager Estimates</span></td><td>derive ownership_percentage for SAFEs/notes</td></tr>
+<tr><td><a>#18795</a></td><td><span class="pill">Support</span></td><td>clarify Succession Threshold tooltip</td></tr>
+<tr><td><a>#17966</a></td><td><span class="pill">Valuation Wizard</span></td><td>valuation update wizard (Lane E)</td></tr></table>
+<b style="display:block;margin:10px 0 4px">In progress</b>
+<table><tr><th>PR</th><th>project</th><th>what</th></tr>
+<tr><td><a>#18806</a></td><td><span class="pill">Manager Estimates</span></td><td>manager estimate entry screen</td></tr>
+<tr><td><a>#18758</a></td><td><span class="pill">Dashboard Metrics</span></td><td>clickable tiles, freshness captions</td></tr>
+<tr><td><a>#18135</a></td><td><span class="pill">Transfers/H20</span></td><td>transfer historical fee allocations</td></tr></table></div>
+</div></body></html>

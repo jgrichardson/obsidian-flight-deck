@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="640" viewBox="0 0 1000 640" font-family="-apple-system,Segoe UI,Roboto,sans-serif">
+<rect width="1000" height="640" fill="#191b22"/>
+<text x="500" y="34" fill="#dcddde" font-size="20" font-weight="700" text-anchor="middle">Obsidian Flight Deck — architecture &amp; data flow</text>
+<text x="500" y="54" fill="#8b90a0" font-size="12.5" text-anchor="middle">everything runs on your machine · read-only APIs · no server, no database</text>
+
+<!-- SOURCES (left) -->
+<rect x="30" y="90" width="200" height="250" rx="10" fill="#20232d" stroke="#2c3140"/>
+<text x="130" y="114" fill="#6cb0e6" font-size="13" font-weight="700" text-anchor="middle">SOURCES (read-only)</text>
+<g fill="#dcddde" font-size="12.5">
+<rect x="48" y="126" width="164" height="26" rx="6" fill="#242a36"/><text x="60" y="143">GitHub  (gh / token)</text>
+<rect x="48" y="158" width="164" height="26" rx="6" fill="#242a36"/><text x="60" y="175">Google  Calendar + Gmail</text>
+<rect x="48" y="190" width="164" height="26" rx="6" fill="#242a36"/><text x="60" y="207">Slack   (browser session)</text>
+<rect x="48" y="222" width="164" height="26" rx="6" fill="#242a36"/><text x="60" y="239">Status pages (any)</text>
+<rect x="48" y="254" width="164" height="26" rx="6" fill="#242a36"/><text x="60" y="271">Your project notes</text>
+<rect x="48" y="286" width="164" height="26" rx="6" fill="#242a36"/><text x="60" y="303">…your own panel</text>
+</g>
+<text x="130" y="330" fill="#8b90a0" font-size="11" text-anchor="middle">HTTPS · stdlib urllib</text>
+
+<!-- CORE (center) -->
+<rect x="330" y="90" width="320" height="360" rx="10" fill="#20232d" stroke="#2bb673" stroke-width="1.5"/>
+<text x="490" y="114" fill="#2bb673" font-size="13" font-weight="700" text-anchor="middle">flightdeck  (pure-Python core)</text>
+<g font-size="12.5" fill="#dcddde">
+<rect x="350" y="128" width="280" height="30" rx="6" fill="#242a36"/><text x="364" y="147">config.py — reads flightdeck.toml</text>
+<rect x="350" y="166" width="280" height="30" rx="6" fill="#242a36"/><text x="364" y="185">panels/ — plugin registry (one per card)</text>
+<rect x="350" y="204" width="280" height="30" rx="6" fill="#242a36"/><text x="364" y="223">  each Panel: fetch() → render() markdown</text>
+<rect x="350" y="242" width="280" height="30" rx="6" fill="#242a36"/><text x="364" y="261">render.py — assemble cards in order</text>
+<rect x="350" y="280" width="280" height="30" rx="6" fill="#242a36"/><text x="364" y="299">obsidian.py — write deck + CSS snippet</text>
+<rect x="350" y="318" width="280" height="30" rx="6" fill="#242a36"/><text x="364" y="337">creds.py — keychain / 0600 file</text>
+<rect x="350" y="356" width="280" height="30" rx="6" fill="#242a36"/><text x="364" y="375">cli.py — init · setup · run · schedule</text>
+</g>
+<text x="490" y="410" fill="#8b90a0" font-size="11" text-anchor="middle">flightdeck run  (invoked on a timer)</text>
+<text x="490" y="428" fill="#8b90a0" font-size="11" text-anchor="middle">every N min via launchd (mac) / cron</text>
+
+<!-- OUTPUT (right) -->
+<rect x="750" y="90" width="220" height="250" rx="10" fill="#20232d" stroke="#2c3140"/>
+<text x="860" y="114" fill="#b39ddb" font-size="13" font-weight="700" text-anchor="middle">YOUR VAULT</text>
+<g font-size="12.5" fill="#dcddde">
+<rect x="768" y="126" width="184" height="30" rx="6" fill="#242a36"/><text x="780" y="145">00 Flight Deck.md</text>
+<rect x="768" y="164" width="184" height="30" rx="6" fill="#242a36"/><text x="780" y="183">Standup / Notes (you edit)</text>
+<rect x="768" y="202" width="184" height="30" rx="6" fill="#242a36"/><text x="780" y="221">.obsidian/…/flight-deck.css</text>
+<rect x="768" y="240" width="184" height="30" rx="6" fill="#242a36"/><text x="780" y="259">Archive/&lt;date&gt;.json (history)</text>
+</g>
+<text x="860" y="292" fill="#8b90a0" font-size="11" text-anchor="middle">Obsidian renders it</text>
+<text x="860" y="310" fill="#8b90a0" font-size="11" text-anchor="middle">as styled cards</text>
+
+<!-- CREDS store -->
+<rect x="330" y="486" width="320" height="60" rx="10" fill="#1c2430" stroke="#4a90d9"/>
+<text x="490" y="509" fill="#6cb0e6" font-size="12.5" font-weight="700" text-anchor="middle">OS Keychain (mac) / 0600 file</text>
+<text x="490" y="530" fill="#8b90a0" font-size="11" text-anchor="middle">tokens never leave your machine · read-only scopes · Slack drafts, never posts</text>
+
+<!-- arrows -->
+<defs><marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#5a6072"/></marker></defs>
+<line x1="230" y1="215" x2="326" y2="215" stroke="#5a6072" stroke-width="2" marker-end="url(#a)"/>
+<line x1="650" y1="215" x2="746" y2="215" stroke="#5a6072" stroke-width="2" marker-end="url(#a)"/>
+<line x1="490" y1="486" x2="490" y2="452" stroke="#4a90d9" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="278" y="205" fill="#8b90a0" font-size="10.5" text-anchor="middle">fetch</text>
+<text x="698" y="205" fill="#8b90a0" font-size="10.5" text-anchor="middle">write</text>
+
+<!-- setup flow bottom -->
+<rect x="30" y="486" width="200" height="60" rx="10" fill="#20232d" stroke="#2c3140"/>
+<text x="130" y="509" fill="#e0a419" font-size="12.5" font-weight="700" text-anchor="middle">flightdeck setup &lt;svc&gt;</text>
+<text x="130" y="530" fill="#8b90a0" font-size="10.5" text-anchor="middle">one-time OAuth / token → creds</text>
+<line x1="230" y1="516" x2="326" y2="516" stroke="#5a6072" stroke-width="2" marker-end="url(#a)"/>
+</svg>

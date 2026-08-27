@@ -9,22 +9,9 @@ and any status page — and writes a clean, card-based page into your vault ever
 
 No servers. No database. Pure-Python, standard library only. Your data stays on your machine.
 
-```
-┌─ 🔥 Standup ──────────────────────────┐  ┌─ ℹ️ System status 🟢 ─────────────┐
-│ Focused on top priorities this week    │  │ • GitHub  🟢 operational          │
-│ • Billing — shipped, awaiting QA        │  │ • Claude  🟢 operational          │
-│ • Onboarding — in progress, 3/5 PRs     │  └──────────────────────────────────┘
-│ What's next: …                          │  ┌─ ❓ Waiting on ───────────────────┐
-└────────────────────────────────────────┘  │ Alice · sign-off on the API spec  │
-┌─ 📊 Tech progress — last 24h ─────────┐  │ Bob   · QA on the transfers build │
-│ opened 8 · merged 6 · +5,981 / -104     │  └──────────────────────────────────┘
-│ ┌ PR ─── project ──── what ──────────┐  │  ┌─ 📅 Calendar — today ─────────────┐
-│ │ #18792 Billing   data model         │  │  │ 11:30  Tech Standup  ↗            │
-│ │ #18758 Onboarding dashboard tiles   │  │  │ ✉️ invite to respond — Planning   │
-│ └────────────────────────────────────┘  │  └──────────────────────────────────┘
-└────────────────────────────────────────┘
-```
-*(Rendered as native Obsidian callout cards — see `docs/mockups/flight-deck.html` for the styled look.)*
+![Flight Deck screenshot](docs/mockups/flight-deck.png)
+
+*A real render — every panel is a native Obsidian callout card. This is the dashboard, not a wireframe.*
 
 ---
 
@@ -98,6 +85,12 @@ active_projects = ["Billing", "Onboarding"]
 - **Add repos / project mapping** — edit the `github_prs` panel options. No code.
 - **Add a whole new panel** — write a `Panel` subclass, register it, enable it in config.
   Full guide: [`docs/PANELS.md`](docs/PANELS.md). A panel is ~30 lines.
+
+## Architecture
+
+![Architecture](docs/mockups/architecture.png)
+
+One `flightdeck run` (fired on a timer) fetches from your configured sources over read-only HTTPS, each enabled **panel** renders its markdown, and the assembled deck is written into your Obsidian vault. Credentials live in your OS keychain; nothing is sent anywhere but the APIs you set up.
 
 ## Design
 
