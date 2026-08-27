@@ -11,7 +11,63 @@ from __future__ import annotations
 import os, sys, shutil
 from . import config as cfgmod
 
-EXAMPLE = os.path.join(os.path.dirname(__file__), "..", "flightdeck.example.toml")
+EXAMPLE_TOML = r"""# ── Flight Deck config ─────────────────────────────────────────────
+# Copy to ~/.config/flightdeck/flightdeck.toml (or run `flightdeck init`).
+
+[vault]
+path = "~/Obsidian/MyVault"        # your Obsidian vault folder
+deck_file = "00 Flight Deck.md"    # note the deck is written to
+
+[schedule]
+every_minutes = 5                  # auto-refresh interval
+
+# ── Panels (ordered top → bottom). Delete any you don't want. ──────
+
+[[panels]]
+name = "embed"
+title = "Standup"
+callout = "tip"
+file = "Flight Deck Standup Today.md"   # an editable note you curate
+
+[[panels]]
+name = "embed"
+title = "My notes"
+callout = "pencil"
+file = "Flight Deck Notes.md"
+
+[[panels]]
+name = "status"
+# Add ANY Statuspage-based service — not just these two.
+[[panels.services]]
+label = "GitHub"
+url = "https://www.githubstatus.com"
+[[panels.services]]
+label = "Claude"
+url = "https://status.claude.com"
+
+[[panels]]
+name = "waiting_on"
+source_dir = "~/projects"          # scanned recursively for "Waiting on" items
+# people = ["Alice", "Bob"]        # optional attribution filter
+
+[[panels]]
+name = "github_prs"
+repos = ["your-org/your-repo"]
+base_branch = "main"
+active_projects = ["Billing", "Onboarding"]   # optional; else all labels show
+[panels.github_prs.project_labels]            # optional regex -> project
+"bill|invoice" = "Billing"
+"onboard|signup" = "Onboarding"
+
+# Optional OAuth panels (uncomment after `flightdeck setup google/slack`):
+# [[panels]]
+# name = "calendar"
+# [[panels]]
+# name = "email"
+# [[panels]]
+# name = "slack_drafts"
+"""
+
 
 def _init():
     dst = cfgmod.DEFAULT_PATH
@@ -19,7 +75,7 @@ def _init():
     if os.path.exists(dst):
         print(f"Config already exists at {dst}")
     else:
-        shutil.copy(os.path.join(os.path.dirname(__file__), "flightdeck.example.toml"), dst)
+        open(dst, "w").write(EXAMPLE_TOML)
         print(f"Wrote example config to {dst} — edit it (set your vault path + repos).")
     print("Next: `flightdeck setup github`, then `flightdeck run`.")
 

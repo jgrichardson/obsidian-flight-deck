@@ -1,62 +1,76 @@
+<div align="center">
+
 # 🛫 Obsidian Flight Deck
 
-**Your day, on one Obsidian page — built automatically from your live tools.**
+### Your whole day on one Obsidian page — generated from your real dev tools.
 
-Flight Deck turns an Obsidian note into a self-refreshing dashboard: what you shipped, what's in
-progress, who you're waiting on, today's calendar, the email that actually needs you, your unsent
-Slack drafts, and the status of the services you depend on. It reads from GitHub, Google, Slack,
-and any status page — and writes a clean, card-based page into your vault every few minutes.
+*Standup, PRs shipped & in flight, who you're waiting on, today's calendar, the email that actually
+needs you, unsent Slack drafts, and service status — assembled automatically and refreshed every few
+minutes. No server. No database. Runs entirely on your machine.*
 
-No servers. No database. Pure-Python, standard library only. Your data stays on your machine.
+[![CI](https://github.com/jgrichardson/obsidian-flight-deck/actions/workflows/ci.yml/badge.svg)](https://github.com/jgrichardson/obsidian-flight-deck/actions/workflows/ci.yml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org)
+[![Zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](#design)
+[![License: MIT](https://img.shields.io/badge/license-MIT-black)](LICENSE)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-orange)](CONTRIBUTING.md)
 
-![Flight Deck screenshot](docs/mockups/flight-deck.png)
+<img src="docs/mockups/flight-deck.png" alt="Flight Deck dashboard" width="820">
 
-*A real render — every panel is a native Obsidian callout card. This is the dashboard, not a wireframe.*
+</div>
 
 ---
 
-## What each panel does
+## Why
+
+You already have a dozen tabs open to answer one question — *what should I be doing, and what's
+blocking me?* Flight Deck answers it in one glance, in the notes app you already keep open. It reads
+your live tools and writes a clean, card-based page into your Obsidian vault. You read it; you never
+maintain it.
+
+- **One glance, not twelve tabs.** GitHub, calendar, email, Slack, and status pages, unified.
+- **Standup writes itself.** A curated standup card you shape once and edit inline.
+- **Yours, on your machine.** Read-only scopes, credentials in your OS keychain, nothing phones home.
+- **Extensible by design.** Every panel is optional, reorderable, and ~30 lines to add your own.
+
+## Panels
 
 | Panel | Shows | Needs |
 |---|---|---|
-| **Standup** | An editable note you curate (embedded live) | nothing |
-| **My notes** | A scratch note, editable beside the deck | nothing |
-| **Tech progress** | Last-24h PR metrics + merged/in-progress tables, tagged by project | GitHub |
-| **Waiting on** | Who owes you, scanned from your project notes | nothing |
-| **System status** | Any Statuspage service (GitHub, Claude, your own…) | nothing |
-| **Calendar** | Today's events + invites to answer, clickable | Google (read-only) |
-| **Email — needs you** | Unread person-to-person mail, newsletters filtered | Google (read-only) |
-| **Slack drafts** | Your unsent drafts (never posts) | Slack |
+| **Standup** | An editable note you curate — embedded live | — |
+| **My notes** | A scratch pad, editable beside the deck | — |
+| **Tech progress** | Last-24h PR metrics + merged / in-progress tables, tagged by project | GitHub |
+| **Waiting on** | Who owes you, scanned from your project notes | — |
+| **System status** | Any [Statuspage](https://www.atlassian.com/software/statuspage) service — GitHub, your own, anything | — |
+| **Calendar** | Today's events + invites to answer, one click to the event | Google (read-only) |
+| **Email — needs you** | Unread person-to-person mail, newsletters filtered out | Google (read-only) |
+| **Slack drafts** | Your unsent drafts — **read + draft only, never posts** | Slack |
 
-Every panel is **optional and reorderable** — you list the ones you want, in the order you want,
-in one config file. Every panel is **extensible** — the status panel takes any list of status
-URLs; the GitHub panel takes any repos and your own project-label rules.
+Pick the ones you want, in the order you want, in one config file. Add your own in minutes.
 
 ## Quickstart
 
 ```bash
-pip install obsidian-flight-deck          # or: pipx install obsidian-flight-deck
-flightdeck init                           # writes ~/.config/flightdeck/flightdeck.toml
-$EDITOR ~/.config/flightdeck/flightdeck.toml   # set your vault path + repos
-flightdeck setup github                   # reuses `gh` if you have it, else paste a token
-flightdeck run                            # builds the deck into your vault
-flightdeck install-schedule               # auto-refresh every few minutes
+pip install obsidian-flight-deck        # or: pipx install obsidian-flight-deck
+flightdeck init                         # writes ~/.config/flightdeck/flightdeck.toml
+$EDITOR ~/.config/flightdeck/flightdeck.toml    # set your vault path + repos
+flightdeck setup github                 # reuses the `gh` CLI, or paste a token
+flightdeck run                          # builds the deck into your vault
+flightdeck install-schedule             # auto-refresh every few minutes (launchd / cron)
 ```
 
-Open the deck note in Obsidian (Reading view). Done.
-
-Add calendar/email/slack when you want them:
+Open the deck note in Obsidian (**Reading view**). That's it. Add the optional integrations whenever:
 
 ```bash
-flightdeck setup google                   # read-only Calendar + Gmail (5-min one-time OAuth)
-flightdeck setup slack                    # browser-session tokens, no app approval
+flightdeck setup google                 # read-only Calendar + Gmail (5-min one-time OAuth)
+flightdeck setup slack                  # browser-session tokens — no app, no admin approval
+flightdeck doctor                       # verify config + connections
 ```
-…then uncomment those panels in your config. See [`docs/AUTH.md`](docs/AUTH.md).
+
+Full auth walkthroughs (including the 5-minute Google setup and the two Slack values): **[docs/AUTH.md](docs/AUTH.md)**.
 
 ## Configuration
 
-One file, `flightdeck.toml`. Panels are declared as an ordered list — see
-[`flightdeck.example.toml`](flightdeck.example.toml). Example:
+One file, `flightdeck.toml`. Panels are an ordered list — reorder or delete freely.
 
 ```toml
 [vault]
@@ -64,50 +78,78 @@ path = "~/Obsidian/MyVault"
 
 [[panels]]
 name = "status"
-[[panels.services]]
+[[panels.services]]                     # add ANY status page, no code
 label = "GitHub"
-url = "https://www.githubstatus.com"
+url   = "https://www.githubstatus.com"
 [[panels.services]]
 label = "My API"
-url = "https://status.mycompany.com"      # any Statuspage works
+url   = "https://status.mycompany.com"
 
 [[panels]]
 name = "github_prs"
 repos = ["my-org/app", "my-org/infra"]
-active_projects = ["Billing", "Onboarding"]
-[panels.github_prs.project_labels]
+active_projects = ["Billing", "Onboarding"]     # optional; else every label shows
+[panels.github_prs.project_labels]              # optional regex → project name
 "bill|invoice" = "Billing"
 ```
 
-## Extending it
-
-- **Add a status endpoint** — just add another `[[panels.services]]` with a URL. No code.
-- **Add repos / project mapping** — edit the `github_prs` panel options. No code.
-- **Add a whole new panel** — write a `Panel` subclass, register it, enable it in config.
-  Full guide: [`docs/PANELS.md`](docs/PANELS.md). A panel is ~30 lines.
+See [`flightdeck.example.toml`](flightdeck.example.toml) for every option.
 
 ## Architecture
 
-![Architecture](docs/mockups/architecture.png)
+<div align="center"><img src="docs/mockups/architecture.png" alt="Architecture" width="760"></div>
 
-One `flightdeck run` (fired on a timer) fetches from your configured sources over read-only HTTPS, each enabled **panel** renders its markdown, and the assembled deck is written into your Obsidian vault. Credentials live in your OS keychain; nothing is sent anywhere but the APIs you set up.
+One `flightdeck run` (fired on a timer) fetches from your configured sources over **read-only
+HTTPS**, each enabled **panel** renders its markdown, and the assembled deck is written into your
+Obsidian vault. Credentials live in your OS keychain; nothing is sent anywhere but the APIs you set up.
+
+## Extending it
+
+- **Add a status endpoint** → one more `[[panels.services]]` line. No code.
+- **Add repos / project mapping** → edit the `github_prs` options. No code.
+- **Add a whole new panel** → subclass `Panel`, implement `render()`, register it. ~30 lines.
+  Guide: **[docs/PANELS.md](docs/PANELS.md)**.
 
 ## Design
 
-- **Pure stdlib.** No pip dependencies. Config is TOML (read via `tomllib`).
-- **Everything derived.** The deck is regenerated every run; you never hand-edit it. The only
+- **Zero dependencies.** Pure Python standard library. Config is TOML (`tomllib`). Installs in seconds.
+- **Everything derived.** The deck is regenerated each run — you never hand-edit it. The only
   hand-edited inputs are the notes you embed (Standup, My notes).
 - **Read-only by default.** Google and Slack use read-only scopes; the Slack integration can create
   drafts but **cannot post**.
-- **Your machine.** Credentials live in your OS keychain (macOS) or a `0600` file. Nothing is sent
-  anywhere except the APIs you configured.
+- **On your machine.** Secrets go in your OS keychain (macOS) or a `0600` file. No telemetry, no cloud.
+
+## FAQ
+
+**Does it work without Obsidian?** It writes a Markdown file — Obsidian just renders it beautifully.
+Any Markdown viewer shows the content; the card styling is Obsidian-specific.
+
+**Is my data safe?** Nothing leaves your machine except calls to the APIs you configure, all read-only
+by default. See [SECURITY.md](SECURITY.md).
+
+**Two-column / grid layout?** Yes, with the free [Multi-Column Markdown](https://github.com/ckRobinson/multi-column-markdown)
+Obsidian plugin (Reading view). Single-column works with no plugins.
+
+**Windows / Linux?** The core is cross-platform; the keychain and scheduler paths are macOS-first
+today, with a cron fallback and a file-based credential store elsewhere. Contributions welcome.
+
+**Only GitHub and Google and Slack?** Those ship built-in. The status panel already takes *any*
+Statuspage service, and a new source is a ~30-line panel — see [docs/PANELS.md](docs/PANELS.md).
 
 ## Roadmap
 
-- Optional per-viewer web export (share a redacted subset).
-- An "ask your deck" agent over the daily JSON snapshots.
-- More built-in panels (CI, incidents, on-call, metrics).
+- More built-in panels (CI runs, incidents, on-call, PR review queue).
+- Optional web export — share a redacted view (great for a manager or teammate).
+- Optional **AI layer** (harness-agnostic): compose the standup and answer questions over your deck's
+  history — pluggable across Claude, Codex, or any CLI you already use.
+- First-class Windows/Linux support.
+
+## Contributing
+
+Small, dependency-free, and easy to hack on. See **[CONTRIBUTING.md](CONTRIBUTING.md)** and the
+[good first issues](https://github.com/jgrichardson/obsidian-flight-deck/labels/good%20first%20issue).
+Star the repo if it's useful — it genuinely helps. ⭐
 
 ## License
 
-MIT. Originally generalized from a personal Flight Deck by Greg Richardson.
+[MIT](LICENSE).

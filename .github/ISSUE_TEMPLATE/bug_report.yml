@@ -1,0 +1,13 @@
+name: Bug report
+description: Something isn't working
+labels: [bug]
+body:
+  - type: textarea
+    attributes: { label: What happened?, description: Include the exact command and any error output. }
+    validations: { required: true }
+  - type: input
+    attributes: { label: OS + Python version, placeholder: "macOS 15 / Python 3.12" }
+  - type: dropdown
+    attributes: { label: Panel involved, options: [github_prs, status, calendar, email, slack_drafts, waiting_on, embed, core/other] }
+  - type: textarea
+    attributes: { label: Your flightdeck.toml (redact secrets), render: toml }

@@ -5,15 +5,32 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "obsidian-flight-deck"
 version = "0.1.0"
-description = "A config-driven, plugin-based daily dashboard for Obsidian, built from your live tools (GitHub, status pages, calendar, email, Slack)."
+description = "A config-driven, plugin-based daily dashboard for Obsidian, built from your live dev tools (GitHub, status pages, calendar, email, Slack)."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-authors = [{ name = "Greg Richardson" }]
-dependencies = []                      # stdlib only — no pip deps
+authors = [{ name = "obsidian-flight-deck contributors" }]
+keywords = ["obsidian", "dashboard", "developer-productivity", "github", "standup", "self-hosted", "cli"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Utilities",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/jgrichardson/obsidian-flight-deck"
+Repository = "https://github.com/jgrichardson/obsidian-flight-deck"
+Issues = "https://github.com/jgrichardson/obsidian-flight-deck/issues"
 
 [project.scripts]
 flightdeck = "flightdeck.cli:main"
 
 [tool.setuptools]
 packages = ["flightdeck", "flightdeck.panels", "flightdeck.auth"]
+
+[tool.setuptools.package-data]
+flightdeck = ["flightdeck.example.toml"]

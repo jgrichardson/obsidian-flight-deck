@@ -1,5 +1,9 @@
 __pycache__/
 *.pyc
+*.egg-info/
+build/
+dist/
 .DS_Store
+.pytest_cache/
 credentials.json
 flightdeck.toml

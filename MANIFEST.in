@@ -1,0 +1,3 @@
+include LICENSE README.md CHANGELOG.md
+include flightdeck/flightdeck.example.toml
+recursive-include docs *.md *.png *.svg *.html
