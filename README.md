@@ -14,7 +14,7 @@ minutes. No server. No database. Runs entirely on your machine.*
 [![License: MIT](https://img.shields.io/badge/license-MIT-black)](LICENSE)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-orange)](CONTRIBUTING.md)
 
-<img src="docs/mockups/flight-deck.png" alt="Flight Deck dashboard" width="820">
+<img src="docs/mockups/flight-deck.gif" alt="Flight Deck dashboard — a live scroll-through" width="720">
 
 </div>
 
@@ -141,7 +141,7 @@ Statuspage service, and a new source is a ~30-line panel — see [docs/PANELS.md
 - More built-in panels (CI runs, incidents, on-call, PR review queue).
 - Optional web export — share a redacted view (great for a manager or teammate).
 - Optional **AI layer** (harness-agnostic): compose the standup and answer questions over your deck's
-  history — pluggable across Claude, Codex, or any CLI you already use.
+  history — pluggable across Claude, Codex, or any CLI you already use. See [the plan](docs/ROADMAP-AI-LAYER.md).
 - First-class Windows/Linux support.
 
 ## Contributing
