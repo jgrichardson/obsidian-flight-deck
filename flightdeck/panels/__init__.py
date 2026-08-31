@@ -6,12 +6,14 @@ from .github_prs import GithubPRs
 from .status import Status
 from .embed import Embed
 from .waiting_on import WaitingOn
+from .claude_quotas import ClaudeQuotas
 
 REGISTRY = {
     GithubPRs.NAME: GithubPRs,
     Status.NAME: Status,
     Embed.NAME: Embed,
     WaitingOn.NAME: WaitingOn,
+    ClaudeQuotas.NAME: ClaudeQuotas,
 }
 
 # Optional OAuth panels — imported lazily so a missing setup never breaks core.

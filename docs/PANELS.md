@@ -50,3 +50,5 @@ city = "Denver"
 - `embed.py` — embeds an editable note.
 - `decile_base.py` — talks to a Claude Code MCP server directly; a template for wiring any
   MCP-backed data source into a panel without a separate auth flow.
+- `claude_quotas.py` — reads small JSON cache files instead of calling an API; a template for a
+  panel backed by another local process (see `docs/CLAUDE_QUOTAS.md`).

@@ -45,6 +45,7 @@ maintain it.
 | **Email — needs you** | Unread person-to-person mail, newsletters filtered out | Google (read-only) |
 | **Slack drafts** | Your unsent drafts — **read + draft only, never posts** | Slack |
 | **Decile Base** | Mentions you owe a reply, plus a channel activity digest | Claude Code `decilehub` MCP |
+| **Claude quotas** | 5h/weekly usage % per account | A statusline script caching to `~/.claude/usage-cache/` — see `docs/CLAUDE_QUOTAS.md` |
 
 Pick the ones you want, in the order you want, in one config file. Add your own in minutes.
 

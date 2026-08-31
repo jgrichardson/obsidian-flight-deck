@@ -63,6 +63,9 @@ active_projects = ["Billing", "Onboarding"]   # optional; else all labels show
 name = "decile_base"
 channel = "Group Dev"
 
+[[panels]]
+name = "claude_quotas"
+
 # Optional OAuth panels (uncomment after `flightdeck setup google/slack`):
 # [[panels]]
 # name = "calendar"

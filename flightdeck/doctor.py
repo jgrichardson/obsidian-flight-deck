@@ -51,3 +51,6 @@ def run(config):
     except Exception:
         db_ok = False
     print(f"  decilehub:[{_ok(db_ok)}] {'token found + whoami OK' if db_ok else 'not configured — needs the decilehub MCP server in ~/.claude.json (or not used)'}")
+    import glob
+    q_files = glob.glob(os.path.expanduser("~/.claude/usage-cache/*.json"))
+    print(f"  quotas:   [{_ok(bool(q_files))}] {f'{len(q_files)} account(s) cached' if q_files else 'no cache files — see docs/CLAUDE_QUOTAS.md (or not used)'}")

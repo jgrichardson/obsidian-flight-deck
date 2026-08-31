@@ -42,3 +42,30 @@ def test_decile_base_omits_card_without_token(tmp_path, monkeypatch):
     panel = DecileBase(Ctx(config=None, opts={}, now=None))
     assert panel.render() is None
     assert panel.card() == []
+
+def test_claude_quotas_omits_card_without_cache(tmp_path, monkeypatch):
+    from flightdeck.panels import claude_quotas
+    from flightdeck.panels.base import Ctx
+    monkeypatch.setattr(claude_quotas, "CACHE_DIR", str(tmp_path / "no-such-dir"))
+    panel = claude_quotas.ClaudeQuotas(Ctx(config=None, opts={}, now=None))
+    assert panel.render() is None
+    assert panel.card() == []
+
+def test_claude_quotas_reads_cache(tmp_path):
+    import json, datetime
+    from flightdeck.panels import claude_quotas
+    from flightdeck.panels.base import Ctx
+    now = datetime.datetime.now().astimezone()
+    cache = tmp_path / "usage-cache"; cache.mkdir()
+    (cache / "personal.json").write_text(json.dumps(
+        {"account": "personal", "five_hour_pct": 3.2, "week_pct": 41.0, "ts": now.isoformat()}))
+    orig = claude_quotas.CACHE_DIR
+    claude_quotas.CACHE_DIR = str(cache)
+    try:
+        panel = claude_quotas.ClaudeQuotas(Ctx(config=None, opts={}, now=now))
+        lines = panel.render()
+    finally:
+        claude_quotas.CACHE_DIR = orig
+    assert lines is not None
+    assert "personal" in lines[0]
+    assert "3%" in lines[0]
