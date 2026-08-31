@@ -48,3 +48,5 @@ city = "Denver"
 - `github_prs.py` — external API + tables + a per-row classifier.
 - `waiting_on.py` — scans local markdown.
 - `embed.py` — embeds an editable note.
+- `decile_base.py` — talks to a Claude Code MCP server directly; a template for wiring any
+  MCP-backed data source into a panel without a separate auth flow.

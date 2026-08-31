@@ -22,9 +22,10 @@ def build(config) -> str:
             L += [f"> [!warning]+ {getattr(panel,'TITLE',name)} (error)", f"> - {e}", ""]
     return "\n".join(L) + "\n"
 
-def write(config) -> str:
+def write(config) -> str | None:
+    if not os.path.isdir(config.vault):
+        return None
     body = build(config)
     out = os.path.join(config.vault, config.deck_file)
-    os.makedirs(config.vault, exist_ok=True)
     open(out, "w").write(body)
     return out

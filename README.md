@@ -44,6 +44,7 @@ maintain it.
 | **Calendar** | Today's events + invites to answer, one click to the event | Google (read-only) |
 | **Email — needs you** | Unread person-to-person mail, newsletters filtered out | Google (read-only) |
 | **Slack drafts** | Your unsent drafts — **read + draft only, never posts** | Slack |
+| **Decile Base** | Mentions you owe a reply, plus a channel activity digest | Claude Code `decilehub` MCP |
 
 Pick the ones you want, in the order you want, in one config file. Add your own in minutes.
 

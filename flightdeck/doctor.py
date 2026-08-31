@@ -42,3 +42,12 @@ def run(config):
         except Exception:
             s_ok = False
     print(f"  slack:    [{_ok(s_ok)}] {'auth valid' if s_ok else 'run: flightdeck setup slack (or not configured)'}")
+    db_ok = False
+    try:
+        from .panels.decile_base import _mcp_token, _rpc
+        auth = _mcp_token()
+        if auth:
+            db_ok = bool(_rpc(auth, "whoami", {}))
+    except Exception:
+        db_ok = False
+    print(f"  decilehub:[{_ok(db_ok)}] {'token found + whoami OK' if db_ok else 'not configured — needs the decilehub MCP server in ~/.claude.json (or not used)'}")

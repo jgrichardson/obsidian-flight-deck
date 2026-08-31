@@ -27,3 +27,8 @@ def load_optional():
         REGISTRY[SlackDrafts.NAME] = SlackDrafts
     except Exception:
         pass
+    try:
+        from .decile_base import DecileBase
+        REGISTRY[DecileBase.NAME] = DecileBase
+    except Exception:
+        pass

@@ -27,3 +27,18 @@ def test_unknown_panel_is_warned(tmp_path):
 def test_cli_imports():
     import flightdeck.cli  # noqa
     assert hasattr(flightdeck.cli, "main")
+
+def test_write_is_noop_when_vault_missing(tmp_path):
+    missing = str(tmp_path / "does-not-exist")
+    cfg = cfgmod.Config(raw={"vault": {"path": missing},
+                             "panels": [{"name": "dummy"}]}, path="x")
+    assert render.write(cfg) is None
+    assert not os.path.isdir(missing)
+
+def test_decile_base_omits_card_without_token(tmp_path, monkeypatch):
+    from flightdeck.panels.decile_base import DecileBase
+    from flightdeck.panels.base import Ctx
+    monkeypatch.setattr("flightdeck.panels.decile_base._mcp_token", lambda: None)
+    panel = DecileBase(Ctx(config=None, opts={}, now=None))
+    assert panel.render() is None
+    assert panel.card() == []

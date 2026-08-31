@@ -59,6 +59,10 @@ active_projects = ["Billing", "Onboarding"]   # optional; else all labels show
 "bill|invoice" = "Billing"
 "onboard|signup" = "Onboarding"
 
+[[panels]]
+name = "decile_base"
+channel = "Group Dev"
+
 # Optional OAuth panels (uncomment after `flightdeck setup google/slack`):
 # [[panels]]
 # name = "calendar"
@@ -70,6 +74,8 @@ active_projects = ["Billing", "Onboarding"]   # optional; else all labels show
 
 
 def _init():
+    if sys.platform == "darwin" and not os.path.isdir("/Applications/Obsidian.app"):
+        print("Heads up: Obsidian.app not found in /Applications — Flight Deck writes into an Obsidian vault, so `flightdeck run` will no-op until you install it and set [vault] path to a real vault.")
     dst = cfgmod.DEFAULT_PATH
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     if os.path.exists(dst):
@@ -87,6 +93,9 @@ def _setup(service):
 def _run():
     from . import render, obsidian
     c = cfgmod.load()
+    if not os.path.isdir(c.vault):
+        print(f"No-op: vault not found at {c.vault} — check [vault] path in {c.path}, or install Obsidian and open this vault once.")
+        return
     obsidian.install_css(c.vault)
     out = render.write(c)
     print(f"Wrote {out}")

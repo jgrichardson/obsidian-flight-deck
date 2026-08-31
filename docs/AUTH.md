@@ -27,3 +27,9 @@ Only read-only scopes are requested — Flight Deck can never send, delete, or m
 
 These are browser-session tokens (no app creation / admin approval). They expire when you log out of
 Slack in that browser; re-run setup to refresh. The integration can create drafts but **cannot post**.
+
+## Decile Base
+No `flightdeck setup` step. If you already have the `decilehub` MCP server configured for Claude
+Code (your team lead sets this up once, org-wide), Flight Deck finds its token in `~/.claude.json`
+automatically and identifies you via the MCP `whoami` call — nothing to paste. If you don't have
+that MCP server, the panel silently omits itself; `flightdeck doctor` reports it as not configured.
