@@ -52,3 +52,5 @@ city = "Denver"
   MCP-backed data source into a panel without a separate auth flow.
 - `claude_quotas.py` — reads small JSON cache files instead of calling an API; a template for a
   panel backed by another local process (see `docs/CLAUDE_QUOTAS.md`).
+- `activity_scan.py` — scans append-only log files with byte-offset checkpointing so repeated
+  runs never reparse old data; a template for a panel backed by a growing local data source.

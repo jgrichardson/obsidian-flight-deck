@@ -60,3 +60,9 @@ name = "claude_quotas"
 # name = "email"
 # [[panels]]
 # name = "slack_drafts"
+
+# Read-only: surfaces PR/merge mentions found in your own Claude Code session
+# transcripts, for you to review before writing your standup. Never writes to
+# any note itself.
+# [[panels]]
+# name = "activity_scan"

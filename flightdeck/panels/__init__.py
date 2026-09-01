@@ -7,6 +7,7 @@ from .status import Status
 from .embed import Embed
 from .waiting_on import WaitingOn
 from .claude_quotas import ClaudeQuotas
+from .activity_scan import ActivityScan
 
 REGISTRY = {
     GithubPRs.NAME: GithubPRs,
@@ -14,6 +15,7 @@ REGISTRY = {
     Embed.NAME: Embed,
     WaitingOn.NAME: WaitingOn,
     ClaudeQuotas.NAME: ClaudeQuotas,
+    ActivityScan.NAME: ActivityScan,
 }
 
 # Optional OAuth panels — imported lazily so a missing setup never breaks core.

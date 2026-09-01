@@ -46,6 +46,7 @@ maintain it.
 | **Slack drafts** | Your unsent drafts — **read + draft only, never posts** | Slack |
 | **Decile Base** | Mentions you owe a reply, plus a channel activity digest | Claude Code `decilehub` MCP |
 | **Claude quotas** | 5h/weekly usage % per account | A statusline script caching to `~/.claude/usage-cache/` — see `docs/CLAUDE_QUOTAS.md` |
+| **Detected activity** | Read-only feed of PR/merge mentions found in your own Claude Code session transcripts | Nothing — reads `~/.claude/projects/*/*.jsonl`, already on disk |
 
 Pick the ones you want, in the order you want, in one config file. Add your own in minutes.
 

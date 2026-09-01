@@ -10,6 +10,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
   of a hardcoded user.
 - New built-in panel `claude_quotas` — 5h/weekly Claude usage % per account, read from small JSON
   cache files a statusline script writes; see `docs/CLAUDE_QUOTAS.md` for the ~10-line snippet.
+- New built-in panel `activity_scan` — read-only feed of PR/merge mentions detected in your own
+  Claude Code session transcripts (`~/.claude/projects/*/*.jsonl`), for you to review before
+  writing your standup. Never writes to any note; entries persist until explicitly marked
+  consumed. Opt-in (commented out in the example config).
 ### Changed
 - `flightdeck run` is now a clean no-op (prints a message, writes nothing) when the configured vault
   directory doesn't exist yet, instead of silently creating a phantom directory tree.

@@ -69,3 +69,42 @@ def test_claude_quotas_reads_cache(tmp_path):
     assert lines is not None
     assert "personal" in lines[0]
     assert "3%" in lines[0]
+
+def _write_transcript(path, lines):
+    with open(path, "w") as f:
+        for d in lines:
+            f.write(__import__("json").dumps(d) + "\n")
+
+def test_activity_scan_omits_card_when_nothing_found(tmp_path, monkeypatch):
+    from flightdeck.panels import activity_scan
+    from flightdeck.panels.base import Ctx
+    monkeypatch.setattr(activity_scan, "STATE_FILE", str(tmp_path / "state.json"))
+    empty_dir = tmp_path / "no-projects"
+    panel = activity_scan.ActivityScan(Ctx(config=None, opts={"scan_dirs": [str(empty_dir)]}, now=None))
+    assert panel.render() is None
+    assert panel.card() == []
+
+def test_activity_scan_extracts_and_checkpoints(tmp_path, monkeypatch):
+    from flightdeck.panels import activity_scan
+    from flightdeck.panels.base import Ctx
+    monkeypatch.setattr(activity_scan, "STATE_FILE", str(tmp_path / "state.json"))
+    proj = tmp_path / "projects" / "myproj"; proj.mkdir(parents=True)
+    transcript = proj / "session1.jsonl"
+    _write_transcript(transcript, [
+        {"type": "assistant", "timestamp": "2026-09-01T14:00:00Z", "cwd": "/repo",
+         "message": {"content": [{"type": "tool_use", "name": "Bash",
+                                   "input": {"command": "gh pr merge 18963 --squash"}}]}},
+        {"type": "assistant", "timestamp": "2026-09-01T14:05:00Z", "cwd": "/repo",
+         "message": {"content": [{"type": "text", "text": "Done, #18964 merged cleanly."}]}},
+        {"type": "user", "timestamp": "2026-09-01T14:06:00Z", "message": {"content": []}},
+    ])
+    opts = {"scan_dirs": [str(tmp_path / "projects" / "*")]}
+    panel = activity_scan.ActivityScan(Ctx(config=None, opts=opts, now=None))
+    lines = panel.render()
+    assert lines is not None
+    joined = "\n".join(lines)
+    assert "18963" in joined
+    assert "18964" in joined
+
+    panel2 = activity_scan.ActivityScan(Ctx(config=None, opts=opts, now=None))
+    assert panel2.render() is None
