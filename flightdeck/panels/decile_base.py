@@ -20,6 +20,7 @@ Options (in flightdeck.toml):
 from __future__ import annotations
 import json, os, re, urllib.request
 from .base import Panel
+from .. import dismiss
 
 ENDPOINT = "https://decilehub.com/mcp"
 
@@ -94,7 +95,10 @@ class DecileBase(Panel):
                     continue
                 author = post.get("user", {})
                 who = (author.get("first_name", "") + " " + author.get("last_name", "")).strip()
-                mentions.append(f"- [{post.get('title','')[:80]}]({post.get('url','')}) — {who} ({len(post.get('replies', []))} replies)")
+                if dismiss.is_dismissed(it["post_id"]):
+                    continue
+                d_link = dismiss.link(self.ctx.opts.get("dismiss_scheme"), it["post_id"])
+                mentions.append(f"- [{post.get('title','')[:80]}]({post.get('url','')}) — {who} ({len(post.get('replies', []))} replies){d_link}")
 
         import datetime
         cutoff = self.ctx.now - datetime.timedelta(hours=rhours)
@@ -112,7 +116,10 @@ class DecileBase(Panel):
                 continue
             author = it.get("user") or {}
             who = (author.get("first_name", "") + " " + author.get("last_name", "")).strip()
-            recent.append(f"- {it.get('content','')[:100]} — {who}")
+            if dismiss.is_dismissed(it.get("post_id")):
+                continue
+            d_link = dismiss.link(self.ctx.opts.get("dismiss_scheme"), it.get("post_id"))
+            recent.append(f"- {it.get('content','')[:100]} — {who}{d_link}")
 
         L = [f"**Mentions you owe a reply ({len(mentions)})**", ""]
         L += mentions if mentions else ["- none"]

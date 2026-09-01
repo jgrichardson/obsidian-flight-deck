@@ -7,6 +7,7 @@ Commands:
   flightdeck install-schedule     auto-refresh every N minutes (macOS launchd / cron)
   flightdeck doctor               check config + connections
   flightdeck standup-add <id>...  file a detected-activity item as a standup bullet
+  flightdeck dismiss <id>...      hide an item (Base post, email) from the deck
 """
 from __future__ import annotations
 import os, sys, shutil
@@ -121,6 +122,11 @@ def _doctor():
     from . import doctor
     doctor.run(cfgmod.load())
 
+def _dismiss(ids):
+    from . import dismiss
+    total = dismiss.add(ids)
+    print(f"dismissed {len(ids)}; hidden total: {total}")
+
 def _standup_add(ids):
     from .panels import activity_scan
     c = cfgmod.load()
@@ -152,6 +158,7 @@ def main():
     elif cmd == "install-schedule": _schedule()
     elif cmd == "doctor": _doctor()
     elif cmd == "standup-add" and len(args) > 1: _standup_add(args[1:])
+    elif cmd == "dismiss" and len(args) > 1: _dismiss(args[1:])
     else: print(__doc__)
 
 if __name__ == "__main__":

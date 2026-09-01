@@ -44,7 +44,7 @@ maintain it.
 | **Calendar** | Today's events + invites to answer, one click to the event | Google (read-only) |
 | **Email — needs you** | Unread person-to-person mail, newsletters filtered out | Google (read-only) |
 | **Slack drafts** | Your unsent drafts — **read + draft only, never posts** | Slack |
-| **Decile Base** | Mentions you owe a reply, plus a channel activity digest | Claude Code `decilehub` MCP |
+| **Decile Base** | Mentions you owe a reply, plus a channel activity digest; dismissable | Claude Code `decilehub` MCP |
 | **Claude quotas** | 5h/weekly usage % per account | A statusline script caching to `~/.claude/usage-cache/` — see `docs/CLAUDE_QUOTAS.md` |
 | **Detected activity** | PRs you merged/opened (resolved to real titles) plus handoffs you mentioned — "Alice approved the QA"; one click files one as a standup bullet | Nothing — reads `~/.claude/projects/*/*.jsonl`, already on disk |
 

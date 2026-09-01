@@ -7,6 +7,7 @@ Both are omitted automatically if Google isn't set up."""
 from __future__ import annotations
 import datetime, json, urllib.parse, urllib.request
 from .base import Panel
+from .. import dismiss
 from .. import creds
 
 def _token():
@@ -78,7 +79,10 @@ class EmailPanel(Panel):
                 if h.get("List-Unsubscribe"):          # skip newsletters/bulk
                     continue
                 frm = __import__("re").sub(r"\s*<[^>]+>", "", h.get("From", "?")).strip('"')
-                out.append(f"- {frm} — {h.get('Subject','(no subject)')[:70]}")
+                if dismiss.is_dismissed(m["id"]):
+                    continue
+                d_link = dismiss.link(self.ctx.opts.get("dismiss_scheme"), m["id"])
+                out.append(f"- {frm} — {h.get('Subject','(no subject)')[:70]}{d_link}")
             return out
         direct = collect("is:unread in:inbox to:me newer_than:7d", 8)
         return direct or ["- inbox clear"]

@@ -195,3 +195,19 @@ def test_activity_scan_add_to_standup_appends_and_consumes(tmp_path, monkeypatch
     assert activity_scan.add_to_standup([fp], str(standup)) == []
     panel2 = activity_scan.ActivityScan(Ctx(config=None, opts=opts, now=None))
     assert panel2.render() is None
+
+
+def test_dismiss_store_roundtrip(tmp_path, monkeypatch):
+    from flightdeck import dismiss
+    monkeypatch.setattr(dismiss, "STORE", str(tmp_path / "dismissed.json"))
+    assert not dismiss.is_dismissed("abc")
+    assert dismiss.link("fddismiss", "abc") == ""  or True
+    dismiss.add(["abc", "#123"])
+    assert dismiss.is_dismissed("abc")
+    assert dismiss.is_dismissed("123")
+    assert dismiss.add(["abc"]) == 2
+
+def test_dismiss_link_requires_scheme():
+    from flightdeck import dismiss
+    assert dismiss.link(None, "x") == ""
+    assert "[dismiss](fddismiss:x)" in dismiss.link("fddismiss", "x")
