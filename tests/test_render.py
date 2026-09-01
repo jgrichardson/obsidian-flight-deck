@@ -136,6 +136,32 @@ def test_activity_scan_enriches_with_real_pr_title(tmp_path, monkeypatch):
     joined = "\n".join(lines)
     assert "#18902 — fix(mgmt-fees): source Fee Summary from the GL (merged)" in joined
 
+def test_activity_scan_detects_typed_handoffs(tmp_path, monkeypatch):
+    from flightdeck.panels import activity_scan
+    from flightdeck.panels.base import Ctx
+    monkeypatch.setattr(activity_scan, "STATE_FILE", str(tmp_path / "state.json"))
+    proj = tmp_path / "projects" / "p"; proj.mkdir(parents=True)
+    _write_transcript(proj / "s.jsonl", [
+        {"type": "user", "promptSource": "typed", "timestamp": "2026-09-01T15:00:00Z",
+         "cwd": "/repo", "message": {"content": "Alice got back with me and approved the QA on staging."}},
+        {"type": "user", "promptSource": "typed", "timestamp": "2026-09-01T15:01:00Z",
+         "cwd": "/repo", "message": {"content": "Got the financials we were waiting on from Bob."}},
+        {"type": "user", "promptSource": "typed", "timestamp": "2026-09-01T15:02:00Z",
+         "cwd": "/repo", "message": {"content": "Did Alice approve it yet?"}},
+        {"type": "user", "promptSource": "typed", "timestamp": "2026-09-01T15:03:00Z",
+         "cwd": "/repo", "message": {"content": "pos 2930 status=sold review=approved eff=2026-06-30"}},
+        {"type": "user", "timestamp": "2026-09-01T15:04:00Z",
+         "message": {"content": [{"type": "tool_result", "content": "Alice approved the deploy"}]}},
+    ])
+    opts = {"scan_dirs": [str(tmp_path / "projects" / "*")], "people": ["Alice", "Bob"]}
+    lines = activity_scan.ActivityScan(Ctx(config=None, opts=opts, now=None)).render()
+    joined = "\n".join(lines)
+    assert "Alice — Alice got back with me and approved the QA on staging." in joined
+    assert "Bob — Got the financials we were waiting on from Bob." in joined
+    assert "Did Alice approve it yet?" not in joined
+    assert "status=sold" not in joined
+    assert len([l for l in lines if l.startswith("- ")]) == 2
+
 def test_activity_scan_add_to_standup_appends_and_consumes(tmp_path, monkeypatch):
     from flightdeck.panels import activity_scan
     from flightdeck.panels.base import Ctx

@@ -18,6 +18,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 - `flightdeck standup-add <id>...` files a detected item as a standup bullet, appended under a
   marked heading at the END of the note so curated content above is never touched. Pair it with the
   panel's `link_scheme` option to get a clickable `+standup` link on every item.
+- `activity_scan` also detects handoffs you report in your own typed messages -- "Alice got back
+  with me and approved the QA on staging" -- attributed via the new `people` option. A name is
+  required, which keeps pasted logs and specs that merely contain "approved" out; questions and
+  pasted content are skipped, and only `promptSource == "typed"` lines are read so tool output is
+  never mistaken for something you said. Bare `git push` with no PR attached no longer registers.
 ### Changed
 - `flightdeck run` is now a clean no-op (prints a message, writes nothing) when the configured vault
   directory doesn't exist yet, instead of silently creating a phantom directory tree.

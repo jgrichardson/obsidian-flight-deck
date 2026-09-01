@@ -82,6 +82,7 @@ name = "claude_quotas"
 # name = "activity_scan"
 # link_scheme = "fdstandup"          # renders a clickable +standup link per item
 # standup_file = "Standup Today.md"  # where `flightdeck standup-add` files them
+# people = ["Alice", "Bob"]          # names to attribute handoffs to
 """
 
 

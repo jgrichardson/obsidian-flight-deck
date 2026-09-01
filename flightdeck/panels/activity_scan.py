@@ -6,10 +6,16 @@ Claude, when you ask it to prep your standup) to review and fold in by hand.
 Claude Code writes an append-only transcript per session to
 ~/.claude/projects/<project-slug>/<session-id>.jsonl. This panel globs every
 transcript across every project dir, seeks to a per-file checkpoint so it
-never reparses the same bytes twice, and looks for two cheap signals:
+never reparses the same bytes twice, and looks for three cheap signals:
   - a Bash tool_use command matching `gh pr merge` / `gh pr create` / `git push`
   - assistant text mentioning a PR number (#1234) near a verb like
     merged/shipped/opened/fixed/done
+  - a message YOU typed reporting a handoff -- "Alice got back with me and
+    approved the QA on staging", "got the financials we were waiting on from
+    Bob". Requires a name from the `people` option, which is what keeps pasted
+    logs and specs that merely contain "approved" out. Only
+    `promptSource == "typed"` lines are read, so tool output is never mistaken
+    for something you said; questions and pasted content are skipped.
 
 A candidate with a PR number gets enriched with the real PR title and merge
 state via `gh pr view` (run from the transcript's own cwd, so multi-repo work
@@ -33,6 +39,7 @@ Options (in flightdeck.toml):
   max_items = 20
   link_scheme = "fdstandup"              # omit to render no links
   standup_file = "Standup Today.md"      # vault-relative; target for standup-add
+  people = ["Alice", "Bob"]              # names to attribute handoffs to
 """
 from __future__ import annotations
 import glob, hashlib, json, os, re, subprocess
@@ -59,6 +66,23 @@ PR_RE = re.compile(r"#(\d{2,6})\b")
 BARE_PR_RE = re.compile(r"\bgh pr (?:merge|view|close|comment|edit)\s+(\d{2,6})\b")
 VERB_RE = re.compile(r"\b(merged|shipped|opened|fixed|closed|done)\b", re.I)
 CMD_RE = re.compile(r"\bgh pr (merge|create)\b|\bgit push\b")
+HANDOFF_RE = re.compile(
+    r"\bgot back (?:to|with) me\b"
+    r"|\b(?:approved|signed off|sign-off|unblocked|confirmed)\b"
+    r"|\bgave (?:me|us) the (?:go|green light|ok)\b"
+    r"|\b(?:sent|got|received) (?:me |us )?the\b"
+    r"|\bheard back\b"
+    r"|\bwe(?:'re| are|) ?(?:were)? ?waiting on\b",
+    re.I)
+SENT_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
+PASTED_RE = re.compile(
+    r"\[\d{1,2}:\d{2}\s*(?:AM|PM)\]"
+    r"|https?://"
+    r"|\w+=\S+\s+\w+="
+    r"|^\s*[-*>|#]"
+    r'|",\s*"'
+    r"|\bI need to\b|\bkeep track\b|\bmake sure\b|\bcan you\b|\bplease\b",
+    re.I)
 
 
 def _load_state():
@@ -98,16 +122,40 @@ def _extract_from_assistant_text(text, ts, cwd):
     return {"ts": ts, "cwd": cwd, "pr": pm.group(1), "snippet": _centered_snippet(text, pm.start())}
 
 
+def _extract_from_user_text(text, ts, cwd, people):
+    """A typed message reporting a handoff -- someone got back to you, approved
+    something, sent something over. Returns the sentence carrying the signal."""
+    m = HANDOFF_RE.search(text)
+    if not m:
+        return None
+    sentence = text
+    for part in SENT_SPLIT_RE.split(text):
+        if HANDOFF_RE.search(part):
+            sentence = part
+            break
+    sentence = re.sub(r"\s+", " ", sentence).strip()
+    if not sentence or sentence.endswith("?") or PASTED_RE.search(sentence):
+        return None
+    if len(sentence) > 240:
+        sentence = sentence[:237].rstrip() + "\u2026"
+    who = next((p for p in (people or []) if re.search(rf"\b{re.escape(p)}\b", sentence, re.I)), None)
+    if not who:
+        return None
+    return {"ts": ts, "cwd": cwd, "pr": None, "who": who, "snippet": sentence}
+
+
 def _extract_from_bash(cmd, ts, cwd):
     cm = CMD_RE.search(cmd)
     if not cm:
         return None
     m = PR_RE.search(cmd) or BARE_PR_RE.search(cmd)
+    if not m and not cm.group(0).startswith("gh pr"):
+        return None
     pr = m.group(1) if m else None
     return {"ts": ts, "cwd": cwd, "pr": pr, "snippet": _centered_snippet(cmd, cm.start())}
 
 
-def scan(scan_globs, state):
+def scan(scan_globs, state, people=None):
     files = sorted({p for g in scan_globs for p in glob.glob(os.path.expanduser(os.path.join(g, "*.jsonl")))})
     offsets = state.setdefault("offsets", {})
     consumed = set(state.setdefault("consumed", []))
@@ -126,6 +174,17 @@ def scan(scan_globs, state):
                 try:
                     d = json.loads(line)
                 except Exception:
+                    continue
+                if d.get("type") == "user":
+                    if d.get("promptSource") != "typed":
+                        continue
+                    content = d.get("message", {}).get("content")
+                    if not isinstance(content, str):
+                        continue
+                    cand = _extract_from_user_text(content, d.get("timestamp", ""),
+                                                   d.get("cwd", ""), people)
+                    if cand:
+                        candidates.append(cand)
                     continue
                 if d.get("type") != "assistant":
                     continue
@@ -147,7 +206,8 @@ def scan(scan_globs, state):
         if fp in consumed or fp in pending:
             continue
         pending[fp] = {"ts": c.get("ts", ""), "cwd": c.get("cwd", ""),
-                       "pr": c.get("pr"), "snippet": c.get("snippet", "")}
+                       "pr": c.get("pr"), "who": c.get("who"),
+                       "snippet": c.get("snippet", "")}
     for fp in list(pending):
         if fp in consumed:
             pending.pop(fp, None)
@@ -184,7 +244,9 @@ def add_to_standup(fingerprints, standup_path):
             if info and info.get("title"):
                 line = f"- #{item['pr']} \u2014 {info['title']} ({info['state']})"
         if line is None:
-            line = f"- {item.get('snippet', '')}".rstrip()
+            who = item.get("who")
+            body = item.get("snippet", "")
+            line = f"- {who} — {body}".rstrip() if who else f"- {body}".rstrip()
         added.append(line)
     if not added:
         return []
@@ -211,7 +273,7 @@ class ActivityScan(Panel):
         max_items = int(self.ctx.opts.get("max_items", 20))
         state = _load_state()
         try:
-            candidates, state = scan(scan_globs, state)
+            candidates, state = scan(scan_globs, state, self.ctx.opts.get("people"))
         except Exception:
             return None
         _save_state(state)
@@ -231,6 +293,8 @@ class ActivityScan(Panel):
             add = f" · [+standup]({scheme}:{c['fp']})" if scheme and c.get("fp") else ""
             if info and info["title"]:
                 L.append(f"- #{c['pr']} — {info['title']} ({info['state']}){add}")
+            elif c.get("who"):
+                L.append(f"- {c['who']} — {c['snippet']}{add}")
             else:
                 pr = f"#{c['pr']} · " if c.get("pr") else ""
                 L.append(f"- {c.get('ts','')[:16]} — {pr}{c['snippet']}{add}")
