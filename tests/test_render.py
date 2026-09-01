@@ -108,3 +108,22 @@ def test_activity_scan_extracts_and_checkpoints(tmp_path, monkeypatch):
 
     panel2 = activity_scan.ActivityScan(Ctx(config=None, opts=opts, now=None))
     assert panel2.render() is None
+
+def test_activity_scan_enriches_with_real_pr_title(tmp_path, monkeypatch):
+    from flightdeck.panels import activity_scan
+    from flightdeck.panels.base import Ctx
+    monkeypatch.setattr(activity_scan, "STATE_FILE", str(tmp_path / "state.json"))
+    monkeypatch.setattr(activity_scan, "_pr_info",
+                        lambda pr, cwd: {"title": "fix(mgmt-fees): source Fee Summary from the GL", "state": "merged"})
+    proj = tmp_path / "projects" / "myproj"; proj.mkdir(parents=True)
+    _write_transcript(proj / "session1.jsonl", [
+        {"type": "assistant", "timestamp": "2026-09-01T14:00:00Z", "cwd": "/repo",
+         "message": {"content": [{"type": "tool_use", "name": "Bash",
+                                   "input": {"command": "gh pr merge 18902 --squash"}}]}},
+    ])
+    opts = {"scan_dirs": [str(tmp_path / "projects" / "*")]}
+    panel = activity_scan.ActivityScan(Ctx(config=None, opts=opts, now=None))
+    lines = panel.render()
+    assert lines is not None
+    joined = "\n".join(lines)
+    assert "#18902 — fix(mgmt-fees): source Fee Summary from the GL (merged)" in joined

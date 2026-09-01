@@ -11,6 +11,11 @@ never reparses the same bytes twice, and looks for two cheap signals:
   - assistant text mentioning a PR number (#1234) near a verb like
     merged/shipped/opened/fixed/done
 
+A candidate with a PR number gets enriched with the real PR title and merge
+state via `gh pr view` (run from the transcript's own cwd, so multi-repo work
+resolves correctly); falls back to a raw text snippet when that lookup fails
+or no PR number was found.
+
 Entries never expire on their own -- they accumulate until explicitly marked
 consumed (see mark_consumed()), so a Friday's activity is still visible on
 Monday even if nobody looked at the deck over the weekend.
@@ -21,13 +26,28 @@ Options (in flightdeck.toml):
   max_items = 20
 """
 from __future__ import annotations
-import glob, hashlib, json, os, re
+import glob, hashlib, json, os, re, subprocess
 from .base import Panel
+
+STATE_WORD = {"MERGED": "merged", "OPEN": "open", "CLOSED": "closed"}
+
+
+def _pr_info(pr, cwd):
+    try:
+        r = subprocess.run(["gh", "pr", "view", pr, "--json", "title,state"],
+                           cwd=cwd or None, capture_output=True, text=True, timeout=10)
+        if r.returncode != 0:
+            return None
+        d = json.loads(r.stdout)
+        return {"title": d.get("title", ""), "state": STATE_WORD.get(d.get("state", ""), d.get("state", "").lower())}
+    except Exception:
+        return None
 
 DEFAULT_SCAN_GLOB = "~/.claude/projects/*"
 STATE_FILE = os.path.expanduser("~/.config/flightdeck/activity-checkpoint.json")
 
 PR_RE = re.compile(r"#(\d{2,6})\b")
+BARE_PR_RE = re.compile(r"\bgh pr (?:merge|view|close|comment|edit)\s+(\d{2,6})\b")
 VERB_RE = re.compile(r"\b(merged|shipped|opened|fixed|closed|done)\b", re.I)
 CMD_RE = re.compile(r"\bgh pr (merge|create)\b|\bgit push\b")
 
@@ -73,7 +93,7 @@ def _extract_from_bash(cmd, ts, cwd):
     cm = CMD_RE.search(cmd)
     if not cm:
         return None
-    m = PR_RE.search(cmd)
+    m = PR_RE.search(cmd) or BARE_PR_RE.search(cmd)
     pr = m.group(1) if m else None
     return {"ts": ts, "cwd": cwd, "pr": pr, "snippet": _centered_snippet(cmd, cm.start())}
 
@@ -150,7 +170,17 @@ class ActivityScan(Panel):
             return None
         candidates.sort(key=lambda c: c.get("ts", ""), reverse=True)
         L = ["*Not asserted fact -- check these against what actually happened.*", ""]
+        cache = {}
         for c in candidates[:max_items]:
-            pr = f"#{c['pr']} · " if c.get("pr") else ""
-            L.append(f"- {c.get('ts','')[:16]} — {pr}{c['snippet']}")
+            info = None
+            if c.get("pr"):
+                key = (c["cwd"], c["pr"])
+                if key not in cache:
+                    cache[key] = _pr_info(c["pr"], c["cwd"])
+                info = cache[key]
+            if info and info["title"]:
+                L.append(f"- #{c['pr']} — {info['title']} ({info['state']})")
+            else:
+                pr = f"#{c['pr']} · " if c.get("pr") else ""
+                L.append(f"- {c.get('ts','')[:16]} — {pr}{c['snippet']}")
         return L
