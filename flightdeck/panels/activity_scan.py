@@ -16,14 +16,23 @@ state via `gh pr view` (run from the transcript's own cwd, so multi-repo work
 resolves correctly); falls back to a raw text snippet when that lookup fails
 or no PR number was found.
 
-Entries never expire on their own -- they accumulate until explicitly marked
-consumed (see mark_consumed()), so a Friday's activity is still visible on
-Monday even if nobody looked at the deck over the weekend.
+Entries never expire on their own -- they persist in a `pending` map in the
+state file and are only removed when explicitly consumed, so a Friday's
+activity is still visible on Monday even if nobody looked at the deck over
+the weekend.
+
+Set `link_scheme` to render a clickable "+standup" link per item. Clicking it
+should invoke `flightdeck standup-add <fingerprint>`, which files that item as
+a bullet at the END of your standup note (curated content above is never
+touched) and marks it consumed. On macOS that means a tiny URL-handler app
+registering the scheme; see docs/PANELS.md.
 
 Options (in flightdeck.toml):
   [[panels]] name = "activity_scan"
   scan_dirs = ["~/.claude/projects/*"]   # glob patterns, default shown
   max_items = 20
+  link_scheme = "fdstandup"              # omit to render no links
+  standup_file = "Standup Today.md"      # vault-relative; target for standup-add
 """
 from __future__ import annotations
 import glob, hashlib, json, os, re, subprocess
@@ -132,24 +141,64 @@ def scan(scan_globs, state):
                     if cand:
                         candidates.append(cand)
             offsets[path] = f.tell()
-    seen = set()
-    out = []
+    pending = state.setdefault("pending", {})
     for c in candidates:
         fp = _fingerprint(c)
-        if fp in seen or fp in consumed:
+        if fp in consumed or fp in pending:
             continue
-        seen.add(fp)
-        c["fp"] = fp
-        out.append(c)
+        pending[fp] = {"ts": c.get("ts", ""), "cwd": c.get("cwd", ""),
+                       "pr": c.get("pr"), "snippet": c.get("snippet", "")}
+    for fp in list(pending):
+        if fp in consumed:
+            pending.pop(fp, None)
+    out = [dict(v, fp=fp) for fp, v in pending.items()]
     return out, state
 
 
 def mark_consumed(fingerprints):
     state = _load_state()
     consumed = set(state.setdefault("consumed", []))
+    pending = state.setdefault("pending", {})
     consumed.update(fingerprints)
+    for fp in fingerprints:
+        pending.pop(fp, None)
     state["consumed"] = sorted(consumed)
     _save_state(state)
+
+
+def add_to_standup(fingerprints, standup_path):
+    """Turn detected items into standup bullets. Appends under a marked heading
+    at the END of the note so curated content above is never touched, then marks
+    them consumed. Returns the lines added."""
+    state = _load_state()
+    pending = state.get("pending", {})
+    heading = "**Detected activity (added, not yet filed)**"
+    added = []
+    for fp in fingerprints:
+        item = pending.get(fp)
+        if not item:
+            continue
+        line = None
+        if item.get("pr"):
+            info = _pr_info(item["pr"], item.get("cwd"))
+            if info and info.get("title"):
+                line = f"- #{item['pr']} \u2014 {info['title']} ({info['state']})"
+        if line is None:
+            line = f"- {item.get('snippet', '')}".rstrip()
+        added.append(line)
+    if not added:
+        return []
+    body = ""
+    if os.path.isfile(standup_path):
+        body = open(standup_path, errors="ignore").read().rstrip("\n")
+    if heading not in body:
+        body += "\n\n" + heading
+    body += "\n" + "\n".join(added)
+    tmp = standup_path + ".tmp"
+    open(tmp, "w").write(body + "\n")
+    os.replace(tmp, standup_path)
+    mark_consumed(fingerprints)
+    return added
 
 
 class ActivityScan(Panel):
@@ -178,9 +227,11 @@ class ActivityScan(Panel):
                 if key not in cache:
                     cache[key] = _pr_info(c["pr"], c["cwd"])
                 info = cache[key]
+            scheme = self.ctx.opts.get("link_scheme")
+            add = f" · [+standup]({scheme}:{c['fp']})" if scheme and c.get("fp") else ""
             if info and info["title"]:
-                L.append(f"- #{c['pr']} — {info['title']} ({info['state']})")
+                L.append(f"- #{c['pr']} — {info['title']} ({info['state']}){add}")
             else:
                 pr = f"#{c['pr']} · " if c.get("pr") else ""
-                L.append(f"- {c.get('ts','')[:16]} — {pr}{c['snippet']}")
+                L.append(f"- {c.get('ts','')[:16]} — {pr}{c['snippet']}{add}")
         return L

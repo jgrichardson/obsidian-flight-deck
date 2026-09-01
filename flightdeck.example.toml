@@ -66,3 +66,5 @@ name = "claude_quotas"
 # any note itself.
 # [[panels]]
 # name = "activity_scan"
+# link_scheme = "fdstandup"          # renders a clickable +standup link per item
+# standup_file = "Standup Today.md"  # where `flightdeck standup-add` files them

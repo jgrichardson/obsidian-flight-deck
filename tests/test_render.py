@@ -107,7 +107,15 @@ def test_activity_scan_extracts_and_checkpoints(tmp_path, monkeypatch):
     assert "18964" in joined
 
     panel2 = activity_scan.ActivityScan(Ctx(config=None, opts=opts, now=None))
-    assert panel2.render() is None
+    lines2 = panel2.render()
+    assert lines2 == lines
+
+    import json as _json
+    st = _json.load(open(activity_scan.STATE_FILE))
+    assert len(st["pending"]) == 2
+    activity_scan.mark_consumed(list(st["pending"]))
+    panel3 = activity_scan.ActivityScan(Ctx(config=None, opts=opts, now=None))
+    assert panel3.render() is None
 
 def test_activity_scan_enriches_with_real_pr_title(tmp_path, monkeypatch):
     from flightdeck.panels import activity_scan
@@ -127,3 +135,37 @@ def test_activity_scan_enriches_with_real_pr_title(tmp_path, monkeypatch):
     assert lines is not None
     joined = "\n".join(lines)
     assert "#18902 — fix(mgmt-fees): source Fee Summary from the GL (merged)" in joined
+
+def test_activity_scan_add_to_standup_appends_and_consumes(tmp_path, monkeypatch):
+    from flightdeck.panels import activity_scan
+    from flightdeck.panels.base import Ctx
+    monkeypatch.setattr(activity_scan, "STATE_FILE", str(tmp_path / "state.json"))
+    monkeypatch.setattr(activity_scan, "_pr_info",
+                        lambda pr, cwd: {"title": "feat(x): a real title", "state": "merged"})
+    proj = tmp_path / "projects" / "myproj"; proj.mkdir(parents=True)
+    _write_transcript(proj / "s.jsonl", [
+        {"type": "assistant", "timestamp": "2026-09-01T14:00:00Z", "cwd": "/repo",
+         "message": {"content": [{"type": "tool_use", "name": "Bash",
+                                   "input": {"command": "gh pr merge 18902 --squash"}}]}},
+    ])
+    opts = {"scan_dirs": [str(tmp_path / "projects" / "*")], "link_scheme": "fdstandup"}
+    panel = activity_scan.ActivityScan(Ctx(config=None, opts=opts, now=None))
+    lines = panel.render()
+    assert "[+standup](fdstandup:" in "\n".join(lines)
+
+    import json as _json
+    fp = list(_json.load(open(activity_scan.STATE_FILE))["pending"])[0]
+
+    standup = tmp_path / "Standup.md"
+    standup.write_text("**Focused on priorities**\n\n- curated bullet\n")
+    added = activity_scan.add_to_standup([fp], str(standup))
+    assert added == ["- #18902 — feat(x): a real title (merged)"]
+
+    body = standup.read_text()
+    assert body.startswith("**Focused on priorities**\n\n- curated bullet")
+    assert "**Detected activity (added, not yet filed)**" in body
+    assert "- #18902 — feat(x): a real title (merged)" in body
+
+    assert activity_scan.add_to_standup([fp], str(standup)) == []
+    panel2 = activity_scan.ActivityScan(Ctx(config=None, opts=opts, now=None))
+    assert panel2.render() is None

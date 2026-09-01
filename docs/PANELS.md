@@ -54,3 +54,8 @@ city = "Denver"
   panel backed by another local process (see `docs/CLAUDE_QUOTAS.md`).
 - `activity_scan.py` — scans append-only log files with byte-offset checkpointing so repeated
   runs never reparse old data; a template for a panel backed by a growing local data source.
+  Also shows the clickable-action pattern: set `link_scheme = "fdstandup"` and each item renders a
+  `[+standup](fdstandup:<id>)` link. On macOS, register the scheme with a tiny AppleScript app
+  (`osacompile`, then add `CFBundleURLSchemes` to its Info.plist) whose handler shells out to
+  `flightdeck standup-add "$id"`. That files the item as a bullet at the END of your standup note
+  and marks it consumed, so it drops off the card on the next refresh.
