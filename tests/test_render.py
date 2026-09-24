@@ -211,3 +211,112 @@ def test_dismiss_link_requires_scheme():
     from flightdeck import dismiss
     assert dismiss.link(None, "x") == ""
     assert "[dismiss](fddismiss:x)" in dismiss.link("fddismiss", "x")
+
+
+def _fake_base(calls):
+    import datetime
+    now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    replies = {"n": 0}
+
+    def rpc(auth, name, args):
+        calls.append((name, args))
+        if name == "whoami":
+            return {"user": {"id": 1, "first_name": "Greg"}}
+        if name == "base_channels":
+            return {"channels": [{"id": 12047, "name": "Group Dev"}]}
+        if name == "base_inbox":
+            return {"items": [
+                {"post_id": 7, "channel_name": "Group Dev", "content": "@Greg can you look",
+                 "replies_count": replies["n"], "created_at": now, "user": {"id": 2, "first_name": "Ann"}},
+            ]}
+        if name == "get_base_post":
+            return {"post": {"title": "Look at this", "url": "u", "user": {"first_name": "Ann"},
+                             "replies": [{"user_id": 2}] * replies["n"]}}
+        raise AssertionError(name)
+    return rpc, replies
+
+
+def test_decile_base_caches_fetches_between_refreshes(tmp_path, monkeypatch):
+    import datetime
+    from flightdeck.panels import decile_base
+    from flightdeck.panels.base import Ctx
+    from flightdeck import dismiss
+    calls = []
+    rpc, _ = _fake_base(calls)
+    monkeypatch.setattr(decile_base, "_mcp_token", lambda: "Bearer x")
+    monkeypatch.setattr(decile_base, "_rpc", rpc)
+    monkeypatch.setattr(decile_base, "CACHE_FILE", str(tmp_path / "cache.json"))
+    monkeypatch.setattr(dismiss, "STORE", str(tmp_path / "dismissed.json"))
+    ctx = Ctx(config=None, opts={}, now=datetime.datetime.now().astimezone())
+
+    first = decile_base.DecileBase(ctx).render()
+    assert [c[0] for c in calls] == ["whoami", "base_channels", "base_inbox", "get_base_post"]
+    assert calls[2][1] == {"per_page": 50, "channel_id": 12047}
+    assert any("Look at this" in ln for ln in first)
+
+    calls.clear()
+    second = decile_base.DecileBase(ctx).render()
+    assert calls == []
+    assert second == first
+
+
+def test_decile_base_rereads_post_only_when_replies_change(tmp_path, monkeypatch):
+    import datetime
+    from flightdeck.panels import decile_base
+    from flightdeck.panels.base import Ctx
+    from flightdeck import dismiss
+    calls = []
+    rpc, replies = _fake_base(calls)
+    monkeypatch.setattr(decile_base, "_mcp_token", lambda: "Bearer x")
+    monkeypatch.setattr(decile_base, "_rpc", rpc)
+    monkeypatch.setattr(decile_base, "CACHE_FILE", str(tmp_path / "cache.json"))
+    monkeypatch.setattr(dismiss, "STORE", str(tmp_path / "dismissed.json"))
+    ctx = Ctx(config=None, opts={"refresh_minutes": 0}, now=datetime.datetime.now().astimezone())
+
+    decile_base.DecileBase(ctx).render()
+    calls.clear()
+    decile_base.DecileBase(ctx).render()
+    assert [c[0] for c in calls] == ["base_inbox"]
+
+    calls.clear()
+    replies["n"] = 1
+    decile_base.DecileBase(ctx).render()
+    assert [c[0] for c in calls] == ["base_inbox", "get_base_post"]
+
+
+def test_decile_base_serves_cache_when_fetch_fails(tmp_path, monkeypatch):
+    import datetime
+    from flightdeck.panels import decile_base
+    from flightdeck.panels.base import Ctx
+    from flightdeck import dismiss
+    calls = []
+    rpc, _ = _fake_base(calls)
+    monkeypatch.setattr(decile_base, "_mcp_token", lambda: "Bearer x")
+    monkeypatch.setattr(decile_base, "_rpc", rpc)
+    monkeypatch.setattr(decile_base, "CACHE_FILE", str(tmp_path / "cache.json"))
+    monkeypatch.setattr(dismiss, "STORE", str(tmp_path / "dismissed.json"))
+    ctx = Ctx(config=None, opts={"refresh_minutes": 0}, now=datetime.datetime.now().astimezone())
+    first = decile_base.DecileBase(ctx).render()
+
+    def down(auth, name, args):
+        raise OSError("hub down")
+    monkeypatch.setattr(decile_base, "_rpc", down)
+    assert decile_base.DecileBase(ctx).render() == first
+
+
+def test_decile_base_user_opts_skip_whoami(tmp_path, monkeypatch):
+    import datetime
+    from flightdeck.panels import decile_base
+    from flightdeck.panels.base import Ctx
+    from flightdeck import dismiss
+    calls = []
+    rpc, _ = _fake_base(calls)
+    monkeypatch.setattr(decile_base, "_mcp_token", lambda: "Bearer x")
+    monkeypatch.setattr(decile_base, "_rpc", rpc)
+    monkeypatch.setattr(decile_base, "CACHE_FILE", str(tmp_path / "cache.json"))
+    monkeypatch.setattr(dismiss, "STORE", str(tmp_path / "dismissed.json"))
+    ctx = Ctx(config=None, opts={"user_id": 1, "first_name": "Greg"},
+              now=datetime.datetime.now().astimezone())
+    out = decile_base.DecileBase(ctx).render()
+    assert "whoami" not in [c[0] for c in calls]
+    assert any("Look at this" in ln for ln in out)

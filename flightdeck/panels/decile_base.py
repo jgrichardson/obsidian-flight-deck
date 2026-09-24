@@ -16,13 +16,24 @@ Options (in flightdeck.toml):
   channel = "Group Dev"        # channel to watch (default: "Group Dev")
   mention_limit = 12           # max unreplied mentions to show
   recent_hours = 24            # activity digest window
+  refresh_minutes = 10         # reuse the last fetch for this long
+  user_id = 123                # optional: skip `whoami` (needed with admin keys,
+  first_name = "Greg"          #   which `whoami` rejects)
+
+Flight Deck usually refreshes every couple of minutes, so this panel caches
+what it fetches in ~/.config/flightdeck/decile-base-cache.json: your user and
+the channel id are looked up once, the inbox is fetched at most once per
+`refresh_minutes` and filtered to the watched channel server-side, and a
+post's replies are only re-read when its reply count changes. If a fetch
+fails, the last good data is shown instead of dropping the card.
 """
 from __future__ import annotations
-import json, os, re, urllib.request
+import json, os, re, time, urllib.request
 from .base import Panel
 from .. import dismiss
 
 ENDPOINT = "https://decilehub.com/mcp"
+CACHE_FILE = os.path.expanduser("~/.config/flightdeck/decile-base-cache.json")
 
 
 def _mcp_token():
@@ -61,6 +72,67 @@ def _me(auth):
     return user.get("id"), (user.get("first_name") or user.get("name") or "").split()[0]
 
 
+def _channel_id(auth, name):
+    for ch in _rpc(auth, "base_channels", {}).get("channels", []):
+        if name in (ch.get("name"), ch.get("friendly_name")):
+            return ch.get("id")
+    return None
+
+
+def _load_cache():
+    try:
+        return json.load(open(CACHE_FILE))
+    except Exception:
+        return {}
+
+
+def _save_cache(cache):
+    os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
+    tmp = CACHE_FILE + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(cache, f)
+    os.replace(tmp, CACHE_FILE)
+
+
+def _fetch(auth, channel, ttl, me=None):
+    """Return (me_id, me_name, items, cache); network only when the cache is stale."""
+    cache = _load_cache()
+    if me:
+        cache["me"] = list(me)
+    elif not cache.get("me"):
+        cache["me"] = list(_me(auth))
+    if cache.get("channel") != channel or not cache.get("channel_id"):
+        cache.update(channel=channel, channel_id=_channel_id(auth, channel), inbox=None, posts={})
+    inbox = cache.get("inbox") or {}
+    if time.time() - inbox.get("fetched_at", 0) >= ttl:
+        args = {"per_page": 50}
+        if cache["channel_id"]:
+            args["channel_id"] = cache["channel_id"]
+        try:
+            items = _rpc(auth, "base_inbox", args).get("items", [])
+            cache["inbox"] = {"fetched_at": time.time(), "items": items}
+        except Exception:
+            if not inbox:
+                raise
+    _save_cache(cache)
+    me_id, me_name = cache["me"]
+    return me_id, me_name, cache["inbox"]["items"], cache
+
+
+def _post(auth, cache, item):
+    """Post detail, re-read only when the item's reply count moved."""
+    posts = cache.setdefault("posts", {})
+    key, n = str(item["post_id"]), item.get("replies_count")
+    hit = posts.get(key)
+    if hit and n is not None and hit.get("n") == n:
+        return hit["post"]
+    post = _rpc(auth, "get_base_post", {"id": item["post_id"]})["post"]
+    posts[key] = {"n": n, "post": {"title": post.get("title", ""), "url": post.get("url", ""),
+                                   "user": post.get("user", {}),
+                                   "replies": [{"user_id": r.get("user_id")} for r in post.get("replies", [])]}}
+    return posts[key]["post"]
+
+
 class DecileBase(Panel):
     NAME = "decile_base"
     CALLOUT = "question"
@@ -74,11 +146,15 @@ class DecileBase(Panel):
         mlimit = int(self.ctx.opts.get("mention_limit", 12))
         rhours = int(self.ctx.opts.get("recent_hours", 24))
 
+        ttl = 60 * float(self.ctx.opts.get("refresh_minutes", 10))
+
         try:
-            my_id, my_name = _me(auth)
-            items = _rpc(auth, "base_inbox", {}).get("items", [])
+            me = None
+            if self.ctx.opts.get("user_id") and self.ctx.opts.get("first_name"):
+                me = (int(self.ctx.opts["user_id"]), str(self.ctx.opts["first_name"]))
+            my_id, my_name, items, cache = _fetch(auth, channel, ttl, me)
         except Exception:
-            return None  # any API hiccup: omit rather than break the deck
+            return None  # any API hiccup with nothing cached: omit rather than break the deck
 
         mention_re = re.compile(rf"@{re.escape(my_name)}\b", re.I) if my_name else None
 
@@ -88,7 +164,7 @@ class DecileBase(Panel):
                   if i.get("channel_name") == channel and mention_re.search(i.get("content", ""))][:mlimit]
             for it in gd:
                 try:
-                    post = _rpc(auth, "get_base_post", {"id": it["post_id"]})["post"]
+                    post = _post(auth, cache, it)
                 except Exception:
                     continue
                 if any(r.get("user_id") == my_id for r in post.get("replies", [])):
@@ -120,6 +196,13 @@ class DecileBase(Panel):
                 continue
             d_link = dismiss.link(self.ctx.opts.get("dismiss_scheme"), it.get("post_id"))
             recent.append(f"- {it.get('content','')[:100]} — {who}{d_link}")
+
+        try:
+            live = {str(i.get("post_id")) for i in items}
+            cache["posts"] = {k: v for k, v in cache.get("posts", {}).items() if k in live}
+            _save_cache(cache)
+        except Exception:
+            pass
 
         L = [f"**Mentions you owe a reply ({len(mentions)})**", ""]
         L += mentions if mentions else ["- none"]
