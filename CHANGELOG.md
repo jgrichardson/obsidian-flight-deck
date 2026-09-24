@@ -4,6 +4,10 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [SemVer](https://semver.org).
 
 ## [Unreleased]
+### Changed
+- `decile_base` caches its Hub calls: user and channel id are looked up once, the inbox is fetched at most every `refresh_minutes` (default 10) and filtered to the watched channel server-side, and a post's replies are re-read only when its reply count changes. A failed fetch shows the last good data. Cuts steady-state traffic from one unfiltered inbox call plus one call per mention every refresh to zero between refreshes.
+- `decile_base` accepts `user_id` and `first_name` to skip `whoami`, which rejects admin keys (the panel rendered nothing for them before).
+
 ### Added
 - New built-in panel `decile_base` — mentions-owed + channel activity via a Claude Code MCP server,
   with auto-discovered credentials (no `flightdeck setup` step) and a `whoami` identity lookup instead

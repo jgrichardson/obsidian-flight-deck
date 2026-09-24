@@ -49,7 +49,8 @@ city = "Denver"
 - `waiting_on.py` — scans local markdown.
 - `embed.py` — embeds an editable note.
 - `decile_base.py` — talks to a Claude Code MCP server directly; a template for wiring any
-  MCP-backed data source into a panel without a separate auth flow.
+  MCP-backed data source into a panel without a separate auth flow. Also shows caching an
+  API-backed panel so a 2-minute refresh doesn't mean a 2-minute API poll.
 - `claude_quotas.py` — reads small JSON cache files instead of calling an API; a template for a
   panel backed by another local process (see `docs/CLAUDE_QUOTAS.md`).
 - `activity_scan.py` — scans append-only log files with byte-offset checkpointing so repeated

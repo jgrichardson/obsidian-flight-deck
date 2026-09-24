@@ -49,6 +49,9 @@ active_projects = ["Billing", "Onboarding"]   # optional; else all labels show
 [[panels]]
 name = "decile_base"
 channel = "Group Dev"
+refresh_minutes = 10
+# user_id = 123       # set both to skip `whoami` (admin keys need this)
+# first_name = "You"
 
 [[panels]]
 name = "claude_quotas"
